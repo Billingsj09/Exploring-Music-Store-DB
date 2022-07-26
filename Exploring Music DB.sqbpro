@@ -1,0 +1,219 @@
+<?xml version="1.0" encoding="UTF-8"?><sqlb_project><db path="C:/Users/billi/OneDrive/Documents/Codecamdemy/Data Scientist - Analytics/Project2 - Music Store/chinook.db" readonly="0" foreign_keys="1" case_sensitive_like="0" temp_store="0" wal_autocheckpoint="1000" synchronous="2"/><attached/><window><main_tabs open="structure browser pragmas query" current="3"/></window><tab_structure><column_width id="0" width="300"/><column_width id="1" width="0"/><column_width id="2" width="119"/><column_width id="3" width="4965"/><column_width id="4" width="0"/><expanded_item id="0" parent="1"/><expanded_item id="1" parent="1"/><expanded_item id="2" parent="1"/><expanded_item id="3" parent="1"/></tab_structure><tab_browse><current_table name="4,13:maininvoice_items"/><default_encoding codec=""/><browse_table_settings><table schema="main" name="albums" show_row_id="0" encoding="" plot_x_axis="" unlock_view_pk="_rowid_"><sort/><column_widths><column index="1" value="77"/><column index="2" value="300"/><column index="3" value="71"/></column_widths><filter_values/><conditional_formats/><row_id_formats/><display_formats/><hidden_columns/><plot_y_axes/><global_filter/></table><table schema="main" name="customers" show_row_id="0" encoding="" plot_x_axis="" unlock_view_pk="_rowid_"><sort><column index="13" mode="0"/></sort><column_widths><column index="1" value="103"/><column index="2" value="91"/><column index="3" value="102"/><column index="4" value="300"/><column index="5" value="300"/><column index="6" value="161"/><column index="7" value="53"/><column index="8" value="121"/><column index="9" value="100"/><column index="10" value="163"/><column index="11" value="155"/><column index="12" value="227"/><column index="13" value="121"/></column_widths><filter_values/><conditional_formats/><row_id_formats/><display_formats/><hidden_columns/><plot_y_axes/><global_filter/></table><table schema="main" name="employees" show_row_id="0" encoding="" plot_x_axis="" unlock_view_pk="_rowid_"><sort/><column_widths><column index="1" value="104"/><column index="2" value="89"/><column index="3" value="91"/><column index="4" value="151"/><column index="5" value="93"/><column index="6" value="162"/><column index="7" value="162"/><column index="8" value="220"/><column index="9" value="82"/><column index="10" value="52"/><column index="11" value="72"/><column index="12" value="100"/><column index="13" value="146"/><column index="14" value="146"/><column index="15" value="207"/></column_widths><filter_values/><conditional_formats/><row_id_formats/><display_formats/><hidden_columns/><plot_y_axes/><global_filter/></table><table schema="main" name="invoice_items" show_row_id="0" encoding="" plot_x_axis="" unlock_view_pk="_rowid_"><sort><column index="3" mode="0"/></sort><column_widths><column index="1" value="118"/><column index="2" value="84"/><column index="3" value="71"/><column index="4" value="83"/><column index="5" value="78"/></column_widths><filter_values/><conditional_formats/><row_id_formats/><display_formats/><hidden_columns/><plot_y_axes/><global_filter/></table><table schema="main" name="invoices" show_row_id="0" encoding="" plot_x_axis="" unlock_view_pk="_rowid_"><sort><column index="9" mode="1"/></sort><column_widths><column index="1" value="84"/><column index="2" value="103"/><column index="3" value="162"/><column index="4" value="300"/><column index="5" value="161"/><column index="6" value="103"/><column index="7" value="123"/><column index="8" value="151"/><column index="9" value="51"/></column_widths><filter_values/><conditional_formats/><row_id_formats/><display_formats/><hidden_columns/><plot_y_axes/><global_filter/></table><table schema="main" name="playlists" show_row_id="0" encoding="" plot_x_axis="" unlock_view_pk="_rowid_"><sort/><column_widths><column index="1" value="85"/><column index="2" value="189"/></column_widths><filter_values/><conditional_formats/><row_id_formats/><display_formats/><hidden_columns/><plot_y_axes/><global_filter/></table><table schema="main" name="tracks" show_row_id="0" encoding="" plot_x_axis="" unlock_view_pk="_rowid_"><sort><column index="3" mode="0"/></sort><column_widths><column index="1" value="71"/><column index="2" value="300"/><column index="3" value="77"/><column index="4" value="114"/><column index="5" value="74"/><column index="6" value="300"/><column index="7" value="106"/><column index="8" value="79"/><column index="9" value="83"/></column_widths><filter_values/><conditional_formats/><row_id_formats/><display_formats/><hidden_columns/><plot_y_axes/><global_filter/></table></browse_table_settings></tab_browse><tab_sql><sql name="ExploringMusicDB.sql">
+--Number of tracks in each playlist.
+SELECT playlists.PlaylistId, playlists.Name, count(tracks.trackId) as NumOfTracks
+FROM playlists
+JOIN playlist_track
+	ON playlists.PlaylistId = playlist_track.PlaylistId
+JOIN tracks
+	ON playlist_track.TrackId = tracks.TrackId
+GROUP BY playlists.PlaylistId;
+
+--Which tracks appeared in the most playlist?
+SELECT 
+	 t.trackId,
+	 t.name as 'Track Name',
+	 count(p.PlaylistId) as 'Number Of Playlists'
+FROM playlist_track p 
+JOIN tracks t
+	ON p.TrackId = t.TrackId
+GROUP BY t.trackid
+ORDER BY 1 DESC, 3
+LIMIT 50;
+
+--Number of tracks and total per invoice.
+SELECT invoices.InvoiceId, count(tracks.TrackId) as 'Tracks Purchased',invoices.Total
+FROM invoices
+JOIN invoice_items
+	ON invoices.InvoiceId = invoice_items.InvoiceId
+JOIN tracks
+	ON invoice_items.TrackId = tracks.TrackId
+GROUP BY invoices.InvoiceId;
+
+--Which track generated the most revenue?
+SELECT 
+	tracks.name, 
+	ROUND(SUM(invoice_items.UnitPrice),2) as 'Total Revenue', 
+	COUNT(invoice_items.quantity) as 'Times Purchased'
+FROM invoice_items
+JOIN tracks
+	ON invoice_items.TrackId = tracks.TrackId 
+GROUP BY tracks.TrackId
+ORDER BY 2 DESC
+LIMIT 10;
+
+--Which album generated the most revenue?
+SELECT 
+	albums.Title, 
+	SUM(invoice_items.UnitPrice) as 'Total Revenue', 
+	COUNT(invoice_items.quantity) as 'Times Purchased'
+FROM invoice_items
+JOIN tracks
+	ON invoice_items.TrackId = tracks.TrackId
+JOIN albums
+	ON tracks.AlbumId = albums.AlbumId
+GROUP BY tracks.AlbumId
+ORDER BY 2 DESC
+LIMIT 10;
+
+--Which genre generated the most revenue?
+SELECT 
+	genres.name, 
+	ROUND(SUM(invoice_items.UnitPrice),2) as 'Total Revenue', 
+	COUNT(invoice_items.quantity) as 'Times Purchased'
+FROM invoice_items
+JOIN tracks
+	ON invoice_items.TrackId = tracks.TrackId
+JOIN genres
+	ON tracks.GenreId = genres.GenreId
+GROUP BY genres.name
+ORDER BY 2 DESC
+LIMIT 10;
+
+--Which country generated the most revenue?
+SELECT 	
+	BillingCountry, 
+	SUM(total) as 'Total'
+FROM invoices
+GROUP BY BillingCountry
+ORDER BY 2 DESC;
+
+--What percent of total revenue does each country make up?
+SELECT 
+	BillingCountry, 
+	ROUND(SUM(total),2) as 'Total Revenue',
+	ROUND(((SUM(total)/(SELECT SUM(total) FROM invoices))*100),1) as 'Percentage of Total'
+FROM invoices
+GROUP BY BillingCountry
+ORDER BY 2 DESC;
+
+--How many customers did each employee support?
+SELECT 
+	e.FirstName, 
+	e.LastName, 
+	COUNT(c.CustomerId) as 'Customers Supported'
+FROM customers as c
+JOIN employees as e
+	ON c.SupportRepId = e.EmployeeId
+GROUP BY e.EmployeeId
+
+--What is the average revenue for each sale?
+SELECT ROUND(AVG(total),2) as 'Average Revenue'
+FROM invoices
+
+--What is the total revenue produced by each employee?
+SELECT 
+	emp.EmployeeId, 
+	emp.FirstName, 
+	emp.LastName, 
+	ROUND(SUM(inv.total),2) as 'Total Revenue'
+FROM employees emp
+JOIN customers cus 
+	ON emp.EmployeeId = cus.SupportRepId
+JOIN invoices inv 
+	ON cus.CustomerId = inv.CustomerId
+GROUP BY emp.EmployeeId
+
+--What is the average sale price produced by each employee?
+SELECT 
+	emp.EmployeeId, 
+	emp.FirstName, 
+	emp.LastName, 
+	ROUND(AVG(inv.total),2) as 'Average Sale Price'
+FROM employees emp
+JOIN customers cus 
+	ON emp.EmployeeId = cus.SupportRepId
+JOIN invoices inv 
+	ON cus.CustomerId = inv.CustomerId
+GROUP BY emp.EmployeeId
+
+--Do longer or shorter length albums tend to generate more revenue?
+WITH album_length AS(
+SELECT 
+	tracks.albumId AS 'AlbumId',
+	COUNT(tracks.TrackId) AS 'TrackCount'
+FROM tracks
+GROUP BY 1
+ORDER BY 2)
+
+SELECT 
+	album_length.TrackCount as 'Number of Tracks',
+	COUNT(DISTINCT album_length.AlbumId) as 'Number of Albums',
+	ROUND(SUM(Invoice_items.UnitPrice),2) as 'Total Revenue',
+	ROUND(SUM(Invoice_items.UnitPrice)/COUNT(DISTINCT album_length.AlbumId),2) as 'Average Revenue'
+FROM tracks
+JOIN album_length
+	ON tracks.AlbumId = album_length.AlbumId
+JOIN invoice_items
+	ON  tracks.TrackId = invoice_items.TrackId
+GROUP BY 1;
+
+--How many tracks are in each playlist?
+SELECT PlaylistId, COUNT(TrackId) as 'Number of Tracks'
+FROM playlist_track
+GROUP BY PlaylistId
+
+--Is the number of times a track appears in any playlist a good indicator of sales?
+WITH a_count AS(
+	SELECT playlist_track.TrackId as 'TrackId', 
+		COUNT(playlist_track.PlaylistId) as 'pl_count'
+	FROM playlist_track
+	GROUP BY 1
+)
+
+SELECT 
+	a_count.pl_count as 'Appearance Count', 
+	ROUND(SUM(invoice_items.UnitPrice),2) as 'Total Revenue'
+FROM a_count
+JOIN invoice_items
+	ON a_count.TrackId = invoice_items.TrackId
+GROUP BY 1;
+
+--How many sales were there each year?
+SELECT 
+	strftime('%Y', InvoiceDate) as 'Year', 
+	COUNT(*) as 'Total Sales'
+FROM invoices
+GROUP BY 1;
+
+--How much revenue is generated each year?
+SELECT 
+	strftime('%Y', InvoiceDate) as 'Year', 
+	COUNT(*) as 'Total Sales',
+	SUM(Total) as 'Total Revenue'
+FROM invoices
+GROUP BY 1;
+
+--How much revenue is generated each year?
+--Using one WITH clause as two temporary tables
+WITH yr AS(
+	SELECT	
+		(CAST(strftime('%Y', InvoiceDate) as INTEGER) - 1) as 'prev_yr',
+		CAST(strftime('%Y', InvoiceDate) as INTEGER) as 'cur_yr',
+		SUM(total) as 'revenue'
+	FROM invoices
+	GROUP BY 1
+)
+
+SELECT 
+	prev.cur_yr 'Previous Year',
+	prev.revenue as 'Previoue Revenue',
+	cur.cur_yr 'Current year',
+	cur.revenue as 'Current Revenue',
+	ROUND(((cur.revenue-prev.revenue)/prev.revenue)*100,1) as 'Percent Change'
+FROM yr cur 
+JOIN yr prev
+	ON cur.prev_yr = prev.cur_yr;
+
+
+
+</sql><sql name="SQL 10">SELECT 
+	emp.EmployeeId, 
+	emp.FirstName, 
+	emp.LastName, 
+	ROUND(SUM(inv.total),2) as 'Total Revenue'
+FROM employees emp
+JOIN customers cus 
+	ON emp.EmployeeId = cus.SupportRepId
+JOIN invoices inv 
+	ON cus.CustomerId = inv.CustomerId
+GROUP BY emp.EmployeeId</sql><current_tab id="0"/></tab_sql></sqlb_project>
